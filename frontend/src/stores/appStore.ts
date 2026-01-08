@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { User, Group, PanicAlert, AppSettings } from '../types';
 import { authAPI, usersAPI, groupsAPI, panicAPI, settingsAPI, adminAPI } from '../utils/api';
 import { socketService } from '../utils/socket';
+import { pushService } from '../utils/push';
 
 interface AppState {
   // Auth
@@ -91,8 +92,8 @@ export const useAppStore = create<AppState>()(
         users: state.users.map((u) =>
           u.id === userId ? { ...u, avatar } : u
         ),
-        currentUser: state.currentUser?.id === userId 
-          ? { ...state.currentUser, avatar } 
+        currentUser: state.currentUser?.id === userId
+          ? { ...state.currentUser, avatar }
           : state.currentUser
       })),
 
@@ -490,6 +491,17 @@ export const useAppStore = create<AppState>()(
           socketService.onPanicResolved((data) => {
             get().resolvePanicAlert(data.alertId);
             get().setUserPanic(data.userId, false);
+          });
+
+          // 4. Subscribe to push notifications (async, don't wait)
+          pushService.subscribe().then(subscribed => {
+            if (subscribed) {
+              console.log('✅ Push notifications enabled');
+            } else {
+              console.log('⚠️ Push notifications not enabled (permission denied or not supported)');
+            }
+          }).catch(err => {
+            console.error('Push subscription error:', err);
           });
 
           set({ isAuthenticated: true, isLoading: false });

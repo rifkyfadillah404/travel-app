@@ -13,6 +13,7 @@ const settingsRoutes = require('./routes/settings');
 const adminRoutes = require('./routes/admin');
 const itineraryRoutes = require('./routes/itinerary');
 const notificationRoutes = require('./routes/notifications');
+const pushRoutes = require('./routes/push');
 
 const app = express();
 const server = http.createServer(app);
@@ -67,6 +68,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/itinerary', itineraryRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/push', pushRoutes);
 
 // 404 Handler
 app.use((req, res) => {

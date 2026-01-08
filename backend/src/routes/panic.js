@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
+const { sendPanicNotification } = require('./push');
 
 const router = express.Router();
 
@@ -48,6 +49,7 @@ router.post('/', authMiddleware, async (req, res) => {
   try {
     const { message, latitude, longitude } = req.body;
     const userId = req.user.id;
+    const groupId = req.user.groupId;
 
     // Insert panic alert
     const [result] = await pool.query(
@@ -70,6 +72,11 @@ router.post('/', authMiddleware, async (req, res) => {
       isResolved: false,
       timestamp: Date.now()
     };
+
+    // Send push notification to group members (async, don't wait)
+    sendPanicNotification(groupId, userId, users[0].name, message).catch(err => {
+      console.error('Failed to send panic push notifications:', err);
+    });
 
     res.status(201).json(alert);
   } catch (error) {
@@ -96,7 +103,7 @@ router.put('/:id/resolve', authMiddleware, async (req, res) => {
     // Check permission: Admin or Owner
     // Note: Role comparison might need to be case-insensitive depending on DB
     if (userRole?.toLowerCase() !== 'admin' && resolvedBy !== alertOwnerId) {
-       return res.status(403).json({ message: 'Anda tidak berhak menyelesaikan alert ini' });
+      return res.status(403).json({ message: 'Anda tidak berhak menyelesaikan alert ini' });
     }
 
     // Update alert

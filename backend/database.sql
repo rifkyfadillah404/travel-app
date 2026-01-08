@@ -98,6 +98,16 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
 );
 
+-- Push notification subscriptions table
+CREATE TABLE IF NOT EXISTS `push_subscriptions` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `user_id` INT NOT NULL UNIQUE,
+  `subscription` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
 -- =====================================================
 -- MIGRATION: Run these if you already have the tables
 -- =====================================================
@@ -105,6 +115,17 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 -- ALTER TABLE `groups` ADD COLUMN `join_code` VARCHAR(10) UNIQUE AFTER `destination`;
 -- ALTER TABLE `users` ADD COLUMN `qr_token` VARCHAR(64) UNIQUE AFTER `password`;
 -- ALTER TABLE `users` ADD COLUMN `avatar` VARCHAR(255) AFTER `qr_token`;
+
+-- MIGRATION: Add push_subscriptions table for push notifications
+-- Run this if you don't have the table yet:
+-- CREATE TABLE IF NOT EXISTS `push_subscriptions` (
+--   `id` INT PRIMARY KEY AUTO_INCREMENT,
+--   `user_id` INT NOT NULL UNIQUE,
+--   `subscription` TEXT NOT NULL,
+--   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+-- );
 
 -- =====================================================
 -- SAMPLE DATA
