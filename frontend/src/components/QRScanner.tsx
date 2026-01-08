@@ -12,6 +12,8 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
   const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied' | 'unknown'>('unknown');
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualCode, setManualCode] = useState('');
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
@@ -110,12 +112,20 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
         }
       }
 
+      // Use different qrbox sizes for iOS vs others
+      const qrboxSize = isIOS ? 200 : 250;
+
       await scanner.start(
         cameraConfig,
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
+          fps: isIOS ? 5 : 10, // Lower FPS on iOS for stability
+          qrbox: { width: qrboxSize, height: qrboxSize },
           aspectRatio: 1,
+          disableFlip: false, // Allow flipped QR codes
+          // @ts-ignore - experimental config for better scanning
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true // Use native BarcodeDetector on iOS if available
+          }
         },
         async (decodedText) => {
           if (scannerRef.current && scannerRef.current.getState() === 2) {
@@ -237,7 +247,75 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
         </div>
 
         <div className="qr-scanner-footer">
-          <p>Arahkan kamera ke QR Code untuk login</p>
+          {showManualInput ? (
+            <div style={{ width: '100%' }}>
+              <p style={{ marginBottom: '8px', fontSize: '0.875rem' }}>Masukkan kode QR secara manual:</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  placeholder="Masukkan kode..."
+                  style={{
+                    flex: 1,
+                    padding: '10px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (manualCode.trim()) {
+                      onScan(manualCode.trim());
+                    }
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    background: 'var(--accent-500)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Login
+                </button>
+              </div>
+              <button
+                onClick={() => setShowManualInput(false)}
+                style={{
+                  marginTop: '8px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--primary-500)',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                ← Kembali ke scan
+              </button>
+            </div>
+          ) : (
+            <>
+              <p>Arahkan kamera ke QR Code untuk login</p>
+              <button
+                onClick={() => setShowManualInput(true)}
+                style={{
+                  marginTop: '8px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--accent-600)',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  textDecoration: 'underline'
+                }}
+              >
+                Tidak bisa scan? Masukkan kode manual
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
