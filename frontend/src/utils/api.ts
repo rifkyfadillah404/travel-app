@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Get backend URL
 // Use ngrok URL for mobile/remote testing
-const API_URL = 'https://pseudolegal-kurtis-farinosely.ngrok-free.dev/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -79,7 +79,7 @@ export const usersAPI = {
   getById: (id: string) => api.get(`/users/${id}`),
   updateLocation: (latitude: number, longitude: number) =>
     api.post('/users/location', { latitude, longitude }),
-  updateProfile: (avatar: string) => 
+  updateProfile: (avatar: string) =>
     api.put('/users/profile', { avatar }),
 };
 
