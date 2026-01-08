@@ -643,9 +643,10 @@ export function AdminPage() {
             </div>
             <div className="qr-modal-content">
               <div className="qr-code-wrapper">
+                {/* QR contains login URL so iOS Camera app can open it directly */}
                 <QRCodeSVG
                   id="qr-code-svg"
-                  value={selectedUser.qrToken}
+                  value={`${window.location.origin}/login?qr=${selectedUser.qrToken}`}
                   size={200}
                   level="H"
                   includeMargin={true}

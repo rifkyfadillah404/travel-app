@@ -180,6 +180,38 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
     await startScanner();
   };
 
+  // Handle file upload for QR scanning (works on iOS!)
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+
+    try {
+      // Create a temporary scanner instance for file scanning
+      const html5QrCode = new Html5Qrcode("qr-file-reader", { verbose: false });
+
+      const result = await html5QrCode.scanFile(file, /* showImage */ false);
+
+      // Stop any active camera scanner
+      if (scannerRef.current && scannerRef.current.getState() === 2) {
+        try {
+          await scannerRef.current.stop();
+        } catch (e) {
+          // Ignore
+        }
+      }
+
+      onScan(result);
+    } catch (err: any) {
+      console.error('File scan error:', err);
+      setError('Tidak dapat membaca QR code dari gambar. Pastikan gambar jelas dan QR code terlihat.');
+    }
+
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
+  };
+
   const handleOpenSettings = () => {
     // Show instructions for different browsers
     alert(
@@ -300,20 +332,49 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           ) : (
             <>
               <p>Arahkan kamera ke QR Code untuk login</p>
-              <button
-                onClick={() => setShowManualInput(true)}
-                style={{
-                  marginTop: '8px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--accent-600)',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  textDecoration: 'underline'
-                }}
-              >
-                Tidak bisa scan? Masukkan kode manual
-              </button>
+
+              {/* Hidden file input */}
+              <input
+                type="file"
+                id="qr-file-input"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+              {/* Hidden div for file scanner */}
+              <div id="qr-file-reader" style={{ display: 'none' }}></div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <label
+                  htmlFor="qr-file-input"
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--accent-500)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: '500'
+                  }}
+                >
+                  📷 Ambil/Upload Foto QR
+                </label>
+                <button
+                  onClick={() => setShowManualInput(true)}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--primary-100)',
+                    color: 'var(--primary-700)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Ketik Kode Manual
+                </button>
+              </div>
             </>
           )}
         </div>

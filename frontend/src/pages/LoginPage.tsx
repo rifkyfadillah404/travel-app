@@ -1,17 +1,28 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plane, Loader2, QrCode, Eye, EyeOff, Smartphone, Lock } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { QRScanner } from '../components/QRScanner';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, loginWithQR, isLoading, error, clearError } = useAppStore();
 
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+
+  // Auto-login if qr parameter is present in URL (from iOS Camera scanning QR)
+  useEffect(() => {
+    const qrToken = searchParams.get('qr');
+    if (qrToken && !autoLoginAttempted && !isLoading) {
+      setAutoLoginAttempted(true);
+      handleQRScan(qrToken);
+    }
+  }, [searchParams, autoLoginAttempted, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
