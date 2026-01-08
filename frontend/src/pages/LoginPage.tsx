@@ -14,15 +14,41 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+  const [autoLoginMessage, setAutoLoginMessage] = useState<string | null>(null);
+
+  // Extract QR token from either raw token or URL with ?qr= parameter
+  const extractQRToken = (scannedValue: string): string => {
+    // If it looks like a URL, extract the qr parameter
+    if (scannedValue.includes('?qr=') || scannedValue.includes('&qr=')) {
+      try {
+        const url = new URL(scannedValue);
+        const token = url.searchParams.get('qr');
+        if (token) return token;
+      } catch (e) {
+        // Not a valid URL, use as-is
+      }
+    }
+    // Otherwise return as-is (raw token)
+    return scannedValue;
+  };
 
   // Auto-login if qr parameter is present in URL (from iOS Camera scanning QR)
   useEffect(() => {
     const qrToken = searchParams.get('qr');
     if (qrToken && !autoLoginAttempted && !isLoading) {
       setAutoLoginAttempted(true);
-      handleQRScan(qrToken);
+      setAutoLoginMessage('Memproses login...');
+
+      // Perform login
+      loginWithQR(qrToken).then((success) => {
+        if (success) {
+          navigate('/');
+        } else {
+          setAutoLoginMessage(null);
+        }
+      });
     }
-  }, [searchParams, autoLoginAttempted, isLoading]);
+  }, [searchParams, autoLoginAttempted, isLoading, loginWithQR, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +60,12 @@ export function LoginPage() {
     }
   };
 
-  const handleQRScan = async (qrToken: string) => {
+  const handleQRScan = async (scannedValue: string) => {
     setShowQRScanner(false);
     clearError();
+
+    const qrToken = extractQRToken(scannedValue);
+    console.log('QR Scanned:', scannedValue, '-> Token:', qrToken);
 
     const success = await loginWithQR(qrToken);
     if (success) {
@@ -56,6 +85,22 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
+          {autoLoginMessage && (
+            <div style={{
+              padding: '12px 16px',
+              background: 'var(--accent-50)',
+              borderRadius: '8px',
+              color: 'var(--accent-700)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px'
+            }}>
+              <Loader2 size={20} className="spin" />
+              {autoLoginMessage}
+            </div>
+          )}
+
           {error && (
             <div className="login-error">
               {error}
