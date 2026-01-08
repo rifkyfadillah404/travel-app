@@ -39,6 +39,7 @@ class SocketService {
   }
 
   sendLocationUpdate(latitude: number, longitude: number) {
+    console.log(`[Socket] Emitting location-update: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
     this.socket?.emit('location-update', { latitude, longitude });
   }
 
@@ -51,7 +52,10 @@ class SocketService {
   }
 
   onUserLocationUpdated(callback: (data: { userId: string; location: { lat: number; lng: number; timestamp: number } }) => void) {
-    this.socket?.on('user-location-updated', callback);
+    this.socket?.on('user-location-updated', (data) => {
+      console.log(`[Socket] Received user-location-updated for user ${data.userId}:`, data.location);
+      callback(data);
+    });
   }
 
   onNewPanicAlert(callback: (alert: unknown) => void) {

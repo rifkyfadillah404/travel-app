@@ -10,8 +10,8 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   const Δλ = ((lng2 - lng1) * Math.PI) / 180;
 
   const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c; // in metres
@@ -84,12 +84,21 @@ export function LocationTracker() {
       const lastSent = lastSentLocationRef.current;
 
       if (current) {
-        // BATTERY OPTIMIZATION: Only send if moved more than 15 meters
-        // OR if this is the first time sending
-        if (!lastSent || getDistance(current.lat, current.lng, lastSent.lat, lastSent.lng) > 15) {
+        const distance = lastSent ? getDistance(current.lat, current.lng, lastSent.lat, lastSent.lng) : Infinity;
+
+        // Debug log
+        console.log(`[LocationTracker] Current: ${current.lat.toFixed(6)}, ${current.lng.toFixed(6)} | Distance moved: ${distance.toFixed(1)}m`);
+
+        // Send if moved more than 5 meters OR first time sending
+        if (!lastSent || distance > 5) {
+          console.log(`[LocationTracker] Sending location update...`);
           sendLocation(current.lat, current.lng);
           lastSentLocationRef.current = { ...current };
+        } else {
+          console.log(`[LocationTracker] Not sending - moved only ${distance.toFixed(1)}m (threshold: 5m)`);
         }
+      } else {
+        console.log(`[LocationTracker] No location available yet`);
       }
     }, settings.trackingInterval * 1000);
 
