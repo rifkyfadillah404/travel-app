@@ -7,9 +7,10 @@ const SOCKET_URL = API_URL.replace(/\/api$/, '');
 
 class SocketService {
   private socket: Socket | null = null;
+  private listeners: Map<string, Function[]> = new Map();
 
   connect() {
-    if (this.socket?.connected) return;
+    if (this.socket?.connected) return this.socket;
 
     const token = localStorage.getItem('token');
 
@@ -22,6 +23,8 @@ class SocketService {
 
     this.socket.on('connect', () => {
       console.log('Socket connected:', this.socket?.id);
+      // Re-attach all stored listeners after reconnect
+      this.reattachListeners();
     });
 
     this.socket.on('disconnect', () => {
@@ -29,6 +32,24 @@ class SocketService {
     });
 
     return this.socket;
+  }
+
+  private reattachListeners() {
+    if (!this.socket) return;
+    
+    this.listeners.forEach((callbacks, event) => {
+      callbacks.forEach(callback => {
+        this.socket?.off(event, callback as any);
+        this.socket?.on(event, callback as any);
+      });
+    });
+  }
+
+  private addListener(event: string, callback: Function) {
+    // Remove old callbacks for this event to avoid duplicates
+    this.listeners.set(event, [callback]);
+    this.socket?.off(event);
+    this.socket?.on(event, callback as any);
   }
 
   disconnect() {
@@ -52,22 +73,23 @@ class SocketService {
   }
 
   onUserLocationUpdated(callback: (data: { userId: string; location: { lat: number; lng: number; timestamp: number } }) => void) {
-    this.socket?.on('user-location-updated', (data) => {
+    const wrappedCallback = (data: any) => {
       console.log(`[Socket] Received user-location-updated for user ${data.userId}:`, data.location);
       callback(data);
-    });
+    };
+    this.addListener('user-location-updated', wrappedCallback);
   }
 
   onNewPanicAlert(callback: (alert: unknown) => void) {
-    this.socket?.on('new-panic-alert', callback);
+    this.addListener('new-panic-alert', callback);
   }
 
   onPanicResolved(callback: (data: { alertId: string; userId: string }) => void) {
-    this.socket?.on('panic-alert-resolved', callback);
+    this.addListener('panic-alert-resolved', callback);
   }
 
   onUserProfileUpdated(callback: (data: { userId: string; avatar: string }) => void) {
-    this.socket?.on('user-profile-updated', callback);
+    this.addListener('user-profile-updated', callback);
   }
 
   getSocket() {

@@ -60,6 +60,7 @@ interface AppState {
 
   // Initialize
   initApp: () => Promise<void>;
+  setupSocketListeners: () => void;
   clearError: () => void;
 }
 
@@ -148,6 +149,27 @@ export const useAppStore = create<AppState>()(
 
       clearError: () => set({ error: null }),
 
+      setupSocketListeners: () => {
+        socketService.onUserLocationUpdated((data) => {
+          get().updateUserLocation(data.userId, data.location.lat, data.location.lng);
+        });
+
+        socketService.onUserProfileUpdated((data) => {
+          get().updateUserAvatar(data.userId, data.avatar);
+        });
+
+        socketService.onNewPanicAlert((alert) => {
+          get().addPanicAlert(alert as PanicAlert);
+          const panicAlert = alert as PanicAlert;
+          get().setUserPanic(panicAlert.userId, true);
+        });
+
+        socketService.onPanicResolved((data) => {
+          get().resolvePanicAlert(data.alertId);
+          get().setUserPanic(data.userId, false);
+        });
+      },
+
       // API Actions
       login: async (phone, password) => {
         set({ isLoading: true, error: null });
@@ -166,6 +188,9 @@ export const useAppStore = create<AppState>()(
 
           // Connect socket
           socketService.connect();
+
+          // Setup socket listeners
+          get().setupSocketListeners();
 
           // Fetch initial data immediately after login
           await Promise.all([
@@ -204,6 +229,9 @@ export const useAppStore = create<AppState>()(
 
           // Connect socket
           socketService.connect();
+
+          // Setup socket listeners
+          get().setupSocketListeners();
 
           // Fetch initial data immediately after login
           await Promise.all([
@@ -388,6 +416,9 @@ export const useAppStore = create<AppState>()(
           socketService.disconnect();
           socketService.connect();
 
+          // Re-setup socket listeners after reconnect
+          get().setupSocketListeners();
+
           return { success: true, message: response.data.message };
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };
@@ -418,6 +449,9 @@ export const useAppStore = create<AppState>()(
           // Disconnect and reconnect to refresh socket rooms (remove old group room)
           socketService.disconnect();
           socketService.connect();
+
+          // Re-setup socket listeners after reconnect
+          get().setupSocketListeners();
 
           return { success: true, message: 'Berhasil keluar dari grup' };
         } catch (error: unknown) {
@@ -474,24 +508,7 @@ export const useAppStore = create<AppState>()(
           socketService.connect();
 
           // Setup socket listeners
-          socketService.onUserLocationUpdated((data) => {
-            get().updateUserLocation(data.userId, data.location.lat, data.location.lng);
-          });
-
-          socketService.onUserProfileUpdated((data) => {
-            get().updateUserAvatar(data.userId, data.avatar);
-          });
-
-          socketService.onNewPanicAlert((alert) => {
-            get().addPanicAlert(alert as PanicAlert);
-            const panicAlert = alert as PanicAlert;
-            get().setUserPanic(panicAlert.userId, true);
-          });
-
-          socketService.onPanicResolved((data) => {
-            get().resolvePanicAlert(data.alertId);
-            get().setUserPanic(data.userId, false);
-          });
+          get().setupSocketListeners();
 
           // 4. Subscribe to push notifications (async, don't wait)
           pushService.subscribe().then(subscribed => {
