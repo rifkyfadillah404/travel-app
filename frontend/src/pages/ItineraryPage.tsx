@@ -48,9 +48,11 @@ export function ItineraryPage() {
     try {
       setIsLoading(true);
       const response = await itineraryAPI.getAll();
-      setItinerary(response.data);
-      if (response.data.length > 0) {
-        const days = Array.from(new Set(response.data.map((item: ItineraryItem) => item.day))) as number[];
+      // Defensive check: ensure data is an array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setItinerary(data);
+      if (data.length > 0) {
+        const days = Array.from(new Set(data.map((item: ItineraryItem) => item.day))) as number[];
         const sortedDays = days.sort((a, b) => a - b);
         if (!sortedDays.includes(selectedDay)) {
           setSelectedDay(sortedDays[0]);
@@ -58,6 +60,7 @@ export function ItineraryPage() {
       }
     } catch (error) {
       console.error('Failed to fetch itinerary:', error);
+      setItinerary([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }

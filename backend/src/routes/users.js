@@ -9,6 +9,11 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     const groupId = req.user.groupId;
 
+    // If user has no group, return empty array
+    if (!groupId) {
+      return res.json([]);
+    }
+
     const [users] = await pool.query(
       `SELECT id, name, phone, role, is_online, is_panic, avatar,
               last_latitude as latitude, last_longitude as longitude, last_location_at as location_timestamp
@@ -79,7 +84,7 @@ router.post('/location', authMiddleware, async (req, res) => {
 
     // Update user online status and cache last location
     await pool.query(
-      'UPDATE users SET is_online = TRUE, last_latitude = ?, last_longitude = ?, last_location_at = NOW() WHERE id = ?', 
+      'UPDATE users SET is_online = TRUE, last_latitude = ?, last_longitude = ?, last_location_at = NOW() WHERE id = ?',
       [latitude, longitude, userId]
     );
 
