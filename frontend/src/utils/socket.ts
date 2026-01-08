@@ -7,28 +7,39 @@ const SOCKET_URL = API_URL.replace(/\/api$/, '');
 
 class SocketService {
   private socket: Socket | null = null;
-  private listeners: Map<string, Function[]> = new Map();
+  private listeners: Map<string, Function> = new Map();
 
   connect() {
-    if (this.socket?.connected) return this.socket;
+    // Disconnect existing socket first if any
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
 
     const token = localStorage.getItem('token');
+    console.log('[Socket] Connecting with token:', token ? 'present' : 'missing');
 
     this.socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       auth: {
         token
-      }
+      },
+      forceNew: true // Force new connection
     });
 
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket?.id);
-      // Re-attach all stored listeners after reconnect
+      console.log('[Socket] Connected:', this.socket?.id);
+      // Re-attach all stored listeners after connect
       this.reattachListeners();
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    this.socket.on('connect_error', (error) => {
+      console.error('[Socket] Connection error:', error.message);
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('[Socket] Disconnected:', reason);
     });
 
     return this.socket;
@@ -37,31 +48,42 @@ class SocketService {
   private reattachListeners() {
     if (!this.socket) return;
     
-    this.listeners.forEach((callbacks, event) => {
-      callbacks.forEach(callback => {
-        this.socket?.off(event, callback as any);
-        this.socket?.on(event, callback as any);
-      });
+    console.log('[Socket] Reattaching', this.listeners.size, 'listeners');
+    this.listeners.forEach((callback, event) => {
+      this.socket?.off(event);
+      this.socket?.on(event, callback as any);
+      console.log('[Socket] Attached listener for:', event);
     });
   }
 
   private addListener(event: string, callback: Function) {
-    // Remove old callbacks for this event to avoid duplicates
-    this.listeners.set(event, [callback]);
-    this.socket?.off(event);
-    this.socket?.on(event, callback as any);
+    // Store listener - will be attached when socket connects
+    this.listeners.set(event, callback);
+    
+    // If socket already connected, attach immediately
+    if (this.socket?.connected) {
+      this.socket.off(event);
+      this.socket.on(event, callback as any);
+      console.log('[Socket] Immediately attached listener for:', event);
+    }
   }
 
   disconnect() {
     if (this.socket) {
+      this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
     }
+    // Keep listeners in map so they can be reattached on next connect
   }
 
   sendLocationUpdate(latitude: number, longitude: number) {
+    if (!this.socket?.connected) {
+      console.warn('[Socket] Cannot send location - not connected');
+      return;
+    }
     console.log(`[Socket] Emitting location-update: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-    this.socket?.emit('location-update', { latitude, longitude });
+    this.socket.emit('location-update', { latitude, longitude });
   }
 
   sendPanicAlert(alert: unknown) {
@@ -94,6 +116,10 @@ class SocketService {
 
   getSocket() {
     return this.socket;
+  }
+
+  isConnected() {
+    return this.socket?.connected || false;
   }
 }
 

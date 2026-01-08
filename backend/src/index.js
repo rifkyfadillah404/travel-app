@@ -94,23 +94,33 @@ app.get('/api/health', (req, res) => {
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   const { id: userId, groupId } = socket.user;
-  console.log(`User connected: ${socket.id} (User: ${userId}, Group: ${groupId})`);
+  console.log(`[Socket] User connected: ${socket.id}`);
+  console.log(`[Socket] User details: userId=${userId}, groupId=${groupId}`);
+  console.log(`[Socket] Full decoded token:`, socket.user);
 
   // Automatically join their group room
   if (groupId) {
     socket.join(`group-${groupId}`);
-    console.log(`Socket ${socket.id} joined group-${groupId}`);
+    console.log(`[Socket] Socket ${socket.id} joined room group-${groupId}`);
+  } else {
+    console.log(`[Socket] Socket ${socket.id} has no groupId, not joining any room`);
   }
 
   // Location update
   socket.on('location-update', (data) => {
     const { latitude, longitude } = data;
 
-    if (!groupId) return;
+    console.log(`[Socket] location-update from user ${userId} in group ${groupId}:`, { latitude, longitude });
+
+    if (!groupId) {
+      console.log(`[Socket] No groupId for user ${userId}, not broadcasting`);
+      return;
+    }
 
     // Broadcast to all users in the same group
+    console.log(`[Socket] Broadcasting to group-${groupId}`);
     socket.to(`group-${groupId}`).emit('user-location-updated', {
-      userId,
+      userId: String(userId),
       location: { lat: latitude, lng: longitude, timestamp: Date.now() }
     });
   });
