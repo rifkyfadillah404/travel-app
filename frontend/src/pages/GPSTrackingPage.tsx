@@ -31,7 +31,8 @@ export function GPSTrackingPage() {
 
   // Filter out admins from tracking
   const filteredUsers = users.filter(u => u.role?.toLowerCase() !== 'admin');
-  const usersWithLocation = filteredUsers.filter((u) => u.location);
+  // Also filter out current user - can't track yourself
+  const usersWithLocation = filteredUsers.filter((u) => u.location && u.id !== currentUser?.id);
   const selectedUser = selectedUserId ? filteredUsers.find(u => u.id === selectedUserId) : null;
 
   // Reset route fit flag when changing target user
@@ -498,11 +499,34 @@ export function GPSTrackingPage() {
         <div className="tracking-active-card">
           <div className="tracking-active-info">
             {selectedUser.avatar ? (
-              <div className={`tracking-avatar ${selectedUser.isOnline ? 'avatar--online' : 'avatar--offline'}`}>
-                <img src={selectedUser.avatar} alt={selectedUser.name} className="avatar-img" />
+              <div className="tracking-avatar" style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: `3px solid ${selectedUser.isOnline ? '#22c55e' : '#9ca3af'}`,
+                flexShrink: 0
+              }}>
+                <img
+                  src={selectedUser.avatar}
+                  alt={selectedUser.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               </div>
             ) : (
-              <div className={`tracking-avatar ${selectedUser.isOnline ? 'avatar--online' : 'avatar--offline'}`}>
+              <div className="tracking-avatar" style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: selectedUser.isOnline ? '#22c55e' : '#9ca3af',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '18px',
+                flexShrink: 0
+              }}>
                 {selectedUser.name.charAt(0)}
               </div>
             )}
