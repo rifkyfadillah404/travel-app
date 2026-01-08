@@ -1,0 +1,209 @@
+
+/* QR Scanner Overlay - Fixed Position & Full Screen */
+.qr-scanner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.qr-scanner-container {
+  background: white;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.qr-scanner-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-bottom: 1px solid var(--primary-100);
+  z-index: 10;
+}
+
+.qr-scanner-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--primary-900);
+}
+
+.qr-close-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary-50);
+  color: var(--primary-600);
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.qr-close-btn:hover {
+  background: var(--primary-100);
+  color: var(--primary-900);
+}
+
+.qr-scanner-content {
+  position: relative;
+  background: black;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.qr-reader {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+
+.qr-reader video {
+  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+
+/* Hide HTML5-QRCode specific elements we don't want */
+#qr-reader__scan_region {
+  background: transparent !important;
+}
+
+#qr-reader__dashboard_section_csr span, 
+#qr-reader__dashboard_section_swaplink {
+  display: none !important;
+}
+
+.qr-scanner-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1e293b;
+  color: white;
+  z-index: 5;
+}
+
+.qr-scanner-loading p {
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+
+.qr-scanner-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1e293b;
+  color: white;
+  padding: 24px;
+  text-align: center;
+  z-index: 10;
+}
+
+.qr-scanner-error p {
+  margin-bottom: 20px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.qr-retry-btn {
+  background: white;
+  color: var(--primary-900);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.qr-retry-btn:hover {
+  transform: scale(1.05);
+}
+
+.qr-scanner-footer {
+  padding: 16px;
+  background: white;
+  text-align: center;
+  border-top: 1px solid var(--primary-100);
+}
+
+.qr-scanner-footer p {
+  font-size: 0.875rem;
+  color: var(--primary-500);
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Mobile Responsive Tweaks */
+@media (max-width: 640px) {
+  .qr-scanner-overlay {
+    padding: 0;
+    align-items: flex-end; /* Sheet-like behavior on mobile */
+  }
+
+  .qr-scanner-container {
+    max-width: 100%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    max-height: 90vh;
+    animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUpMobile {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+}
