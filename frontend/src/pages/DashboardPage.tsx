@@ -102,15 +102,20 @@ export function DashboardPage() {
   //   const daysPassed = differenceInDays(today, start);
   //   const daysLeft = differenceInDays(end, today);
   //   const progressPercent = Math.min(Math.max((daysPassed / totalDays) * 100, 0), 100);
-  const onlineUsers = users.filter((u) => u.isOnline);
-  const unresolvedAlerts = panicAlerts.filter((a) => !a.isResolved);
+
+  // Defensive checks to prevent "filter is not a function" crash
+  const safeUsers = Array.isArray(users) ? users : [];
+  const safePanicAlerts = Array.isArray(panicAlerts) ? panicAlerts : [];
+
+  const onlineUsers = safeUsers.filter((u) => u.isOnline);
+  const unresolvedAlerts = safePanicAlerts.filter((a) => !a.isResolved);
   const currentDua = DAILY_DUAS[currentDuaIndex];
 
   if (isAdmin) {
     // Calculate stats
-    const totalUsers = users.length;
-    const totalPembimbing = users.filter(u => u.role === 'pembimbing').length;
-    const totalJamaah = users.filter(u => u.role === 'jamaah').length;
+    const totalUsers = safeUsers.length;
+    const totalPembimbing = safeUsers.filter(u => u.role === 'pembimbing').length;
+    const totalJamaah = safeUsers.filter(u => u.role === 'jamaah').length;
     //     const activeGroups = 1; // Placeholder, or fetch from groups API if available
 
     return (
@@ -277,7 +282,7 @@ export function DashboardPage() {
           <div className="bento-card stats-card">
             <div className="stat-row">
               <div className="stat-item">
-                <span className="stat-num">{users.length}</span>
+                <span className="stat-num">{safeUsers.length}</span>
                 <span className="stat-lbl">Jamaah</span>
               </div>
               <div className="divider-vertical"></div>
