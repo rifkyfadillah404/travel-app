@@ -5,7 +5,7 @@ import { useAppStore } from '../stores/appStore';
 
 type NavItem = {
   to: string;
-  icon: LucideIcon | (() => JSX.Element);
+  icon: LucideIcon | (() => React.ReactNode);
   label: string;
 };
 

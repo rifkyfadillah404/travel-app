@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../stores/appStore';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Edit2, Activity, ShieldCheck, ChevronLeft, ChevronRight, BookOpen, Users, Loader2, Settings, ShieldCheck as AdminIcon } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { AlertTriangle, Edit2, Activity, ShieldCheck, ChevronLeft, ChevronRight, BookOpen, Users, Loader2, Settings } from 'lucide-react';
+// import { differenceInDays } from 'date-fns';
+
 import { groupsAdminAPI } from '../utils/api';
 
 const DAILY_DUAS = [
@@ -34,7 +35,7 @@ const DAILY_DUAS = [
 ];
 
 export function DashboardPage() {
-  const { users, group, panicAlerts, currentUser, setGroup, joinGroup } = useAppStore();
+  const { users, group, panicAlerts, currentUser, joinGroup } = useAppStore();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteForm, setNoteForm] = useState('');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -68,7 +69,7 @@ export function DashboardPage() {
     if (!group) return;
     try {
       await groupsAdminAPI.update(group.id, { destination: noteForm });
-      setGroup({ ...group, destination: noteForm });
+      // setGroup({ ...group, destination: noteForm });
       setIsEditingNote(false);
     } catch (error) { console.error(error); alert('Gagal update catatan'); }
   };
@@ -94,13 +95,13 @@ export function DashboardPage() {
     }
   };
 
-  const today = new Date();
+  /* const today = new Date();
   const start = group ? new Date(group.departureDate) : new Date();
-  const end = group ? new Date(group.returnDate) : new Date();
-  const totalDays = differenceInDays(end, start) || 1;
-  const daysPassed = differenceInDays(today, start);
-  const daysLeft = differenceInDays(end, today);
-  const progressPercent = Math.min(Math.max((daysPassed / totalDays) * 100, 0), 100);
+  const end = group ? new Date(group.returnDate) : new Date(); */
+  //   const totalDays = differenceInDays(end, start) || 1;
+  //   const daysPassed = differenceInDays(today, start);
+  //   const daysLeft = differenceInDays(end, today);
+  //   const progressPercent = Math.min(Math.max((daysPassed / totalDays) * 100, 0), 100);
   const onlineUsers = users.filter((u) => u.isOnline);
   const unresolvedAlerts = panicAlerts.filter((a) => !a.isResolved);
   const currentDua = DAILY_DUAS[currentDuaIndex];
@@ -110,7 +111,7 @@ export function DashboardPage() {
     const totalUsers = users.length;
     const totalPembimbing = users.filter(u => u.role === 'pembimbing').length;
     const totalJamaah = users.filter(u => u.role === 'jamaah').length;
-    const activeGroups = 1; // Placeholder, or fetch from groups API if available
+    //     const activeGroups = 1; // Placeholder, or fetch from groups API if available
 
     return (
       <div className="dashboard-minimal admin-dashboard-layout">
@@ -246,7 +247,7 @@ export function DashboardPage() {
               <span className="card-label" style={{ margin: 0 }}>Catatan Pembimbing</span>
               {(isPembimbing || isAdmin) && !isEditingNote && (
                 <button onClick={handleEditNoteClick} className="icon-btn" style={{ padding: '4px' }}>
-                  <Edit2 size={16}/>
+                  <Edit2 size={16} />
                 </button>
               )}
             </div>
@@ -323,11 +324,11 @@ export function DashboardPage() {
             <div className="card-top">
               <span className="card-label">Doa Harian</span>
               <div className="dua-controls">
-                <button onClick={prevDua} className="dua-nav-btn"><ChevronLeft size={18}/></button>
-                <button onClick={nextDua} className="dua-nav-btn"><ChevronRight size={18}/></button>
+                <button onClick={prevDua} className="dua-nav-btn"><ChevronLeft size={18} /></button>
+                <button onClick={nextDua} className="dua-nav-btn"><ChevronRight size={18} /></button>
               </div>
             </div>
-            
+
             <div className="dua-content">
               <div className="dua-icon-bg">
                 <BookOpen size={120} strokeWidth={0.5} />

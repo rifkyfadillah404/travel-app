@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  MapPin, 
-  ChevronRight, 
+import {
+  Calendar,
+  MapPin,
+  ChevronRight,
   Loader2,
   CalendarDays,
   Hotel,
   Plane,
   Camera,
   Utensils,
-  Plus,
+  //   Plus,
   Trash2,
   X,
   Clock,
@@ -198,22 +198,22 @@ export function ItineraryPage() {
               <div className="form-group-row">
                 <div className="form-group">
                   <label>Hari Ke-</label>
-                  <input 
-                    type="number" 
-                    value={formData.day} 
-                    onChange={e => setFormData({...formData, day: parseInt(e.target.value)})}
-                    required 
+                  <input
+                    type="number"
+                    value={formData.day}
+                    onChange={e => setFormData({ ...formData, day: parseInt(e.target.value) })}
+                    required
                   />
                 </div>
                 <div className="form-group">
                   <label>Waktu</label>
                   <div className="input-with-icon">
                     <Clock size={16} />
-                    <input 
-                      type="time" 
-                      value={formData.time} 
-                      onChange={e => setFormData({...formData, time: e.target.value})}
-                      required 
+                    <input
+                      type="time"
+                      value={formData.time}
+                      onChange={e => setFormData({ ...formData, time: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
@@ -221,22 +221,22 @@ export function ItineraryPage() {
 
               <div className="form-group">
                 <label>Tanggal</label>
-                <input 
-                  type="date" 
-                  value={formData.date} 
-                  onChange={e => setFormData({...formData, date: e.target.value})}
-                  required 
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={e => setFormData({ ...formData, date: e.target.value })}
+                  required
                 />
               </div>
 
               <div className="form-group">
                 <label>Kegiatan</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Contoh: City Tour Madinah"
-                  value={formData.activity} 
-                  onChange={e => setFormData({...formData, activity: e.target.value})}
-                  required 
+                  value={formData.activity}
+                  onChange={e => setFormData({ ...formData, activity: e.target.value })}
+                  required
                 />
               </div>
 
@@ -244,21 +244,21 @@ export function ItineraryPage() {
                 <label>Lokasi</label>
                 <div className="input-with-icon">
                   <MapPin size={16} />
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Contoh: Masjid Nabawi"
-                    value={formData.location} 
-                    onChange={e => setFormData({...formData, location: e.target.value})}
-                    required 
+                    value={formData.location}
+                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                    required
                   />
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Ikon</label>
-                <select 
-                  value={formData.icon} 
-                  onChange={e => setFormData({...formData, icon: e.target.value})}
+                <select
+                  value={formData.icon}
+                  onChange={e => setFormData({ ...formData, icon: e.target.value })}
                 >
                   <option value="calendar">Kalender</option>
                   <option value="plane">Pesawat</option>
@@ -272,10 +272,10 @@ export function ItineraryPage() {
                 <label>Keterangan (Opsional)</label>
                 <div className="input-with-icon align-top">
                   <AlignLeft size={16} />
-                  <textarea 
+                  <textarea
                     placeholder="Tambahkan detail kegiatan..."
-                    value={formData.description} 
-                    onChange={e => setFormData({...formData, description: e.target.value})}
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
               </div>

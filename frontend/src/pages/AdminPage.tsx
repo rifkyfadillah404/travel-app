@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+
+// ... (rest of the file)
+// actually let's just replace the specific lines
+
 import {
   Users,
   Plus,
@@ -36,7 +40,7 @@ interface AdminUser {
 }
 
 export function AdminPage() {
-  const { currentUser, group } = useAppStore();
+  const { currentUser } = useAppStore();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -418,42 +422,42 @@ export function AdminPage() {
                   u.phone.includes(searchTerm)
                 )
                 .map((user) => (
-                <div key={user.id} className="admin-user-card">
-                  <div className="admin-user-info">
-                    <div className={`admin-user-avatar ${user.isOnline ? 'online' : ''}`}>
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-                      ) : (
-                        user.name.charAt(0).toUpperCase()
-                      )}
+                  <div key={user.id} className="admin-user-card">
+                    <div className="admin-user-info">
+                      <div className={`admin-user-avatar ${user.isOnline ? 'online' : ''}`}>
+                        {user.avatar ? (
+                          <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                        ) : (
+                          user.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="admin-user-details">
+                        <span className="admin-user-name">
+                          {user.name}
+                          <span className={`role-badge role-${user.role}`}>{user.role}</span>
+                        </span>
+                        <span className="admin-user-phone">{user.phone}</span>
+                      </div>
                     </div>
-                    <div className="admin-user-details">
-                      <span className="admin-user-name">
-                        {user.name}
-                        <span className={`role-badge role-${user.role}`}>{user.role}</span>
-                      </span>
-                      <span className="admin-user-phone">{user.phone}</span>
+                    <div className="admin-user-actions">
+                      <button
+                        className="admin-action-btn qr-btn"
+                        onClick={() => handleShowQR(user)}
+                        title="Lihat QR Code"
+                      >
+                        <QrCode size={22} strokeWidth={2} />
+                      </button>
+                      <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDeleteUser(user.id)}
+                        title="Hapus User"
+                        disabled={String(user.id) === currentUser?.id}
+                      >
+                        <Trash2 size={22} strokeWidth={2} />
+                      </button>
                     </div>
                   </div>
-                  <div className="admin-user-actions">
-                    <button
-                      className="admin-action-btn qr-btn"
-                      onClick={() => handleShowQR(user)}
-                      title="Lihat QR Code"
-                    >
-                      <QrCode size={22} strokeWidth={2} />
-                    </button>
-                    <button
-                      className="admin-action-btn delete-btn"
-                      onClick={() => handleDeleteUser(user.id)}
-                      title="Hapus User"
-                      disabled={String(user.id) === currentUser?.id}
-                    >
-                      <Trash2 size={22} strokeWidth={2} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </>
@@ -478,7 +482,7 @@ export function AdminPage() {
                         {item.activity}
                       </span>
                       <span className="admin-user-phone">
-                        <Clock size={12} style={{ marginRight: 4 }} /> {item.time} | 
+                        <Clock size={12} style={{ marginRight: 4 }} /> {item.time} |
                         <MapPin size={12} style={{ margin: '0 4px' }} /> {item.location}
                       </span>
                     </div>

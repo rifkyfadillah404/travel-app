@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
-import { MapPin, Power, Clock, Target, Users, LogOut, Loader2, Camera, Edit2 } from 'lucide-react';
-import { groupsAdminAPI } from '../utils/api';
+import { MapPin, Power, Clock, Target, Users, LogOut, Loader2, Camera } from 'lucide-react';
+// import { groupsAdminAPI } from '../utils/api';
 
 // Compress image before upload (client side)
 const compressImage = (file: File): Promise<string> => {
@@ -16,7 +16,7 @@ const compressImage = (file: File): Promise<string> => {
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 300; // Resize to max 300px to save DB space
         const scaleSize = MAX_WIDTH / img.width;
-        
+
         // If image is smaller than max width, don't resize up
         const width = img.width > MAX_WIDTH ? MAX_WIDTH : img.width;
         const height = img.width > MAX_WIDTH ? img.height * scaleSize : img.height;
@@ -66,15 +66,15 @@ export function SettingsPage() {
   const handleJoinGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!joinCode.trim()) return;
-    
+
     setIsJoining(true);
     setMessage(null);
-    
+
     const result = await joinGroup(joinCode.trim());
-    
+
     setIsJoining(false);
     setMessage({ type: result.success ? 'success' : 'error', text: result.message });
-    
+
     if (result.success) {
       setJoinCode('');
     }
@@ -82,12 +82,12 @@ export function SettingsPage() {
 
   const handleLeaveGroup = async () => {
     if (!confirm('Apakah Anda yakin ingin keluar dari grup ini?')) return;
-    
+
     setIsLeaving(true);
     setMessage(null);
-    
+
     const result = await leaveGroup();
-    
+
     setIsLeaving(false);
     setMessage({ type: result.success ? 'success' : 'error', text: result.message });
   };
@@ -111,7 +111,7 @@ export function SettingsPage() {
       setPreviewAvatar(ev.target?.result as string);
     };
     reader.readAsDataURL(file);
-    
+
     setSelectedFile(file);
     setMessage(null);
   };
@@ -126,7 +126,7 @@ export function SettingsPage() {
       const base64 = await compressImage(selectedFile);
       const result = await updateUserProfile(base64);
       setMessage({ type: result.success ? 'success' : 'error', text: result.message });
-      
+
       if (result.success) {
         setPreviewAvatar(null);
         setSelectedFile(null);
@@ -139,7 +139,7 @@ export function SettingsPage() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
-  
+
   const handleCancelAvatar = () => {
     setPreviewAvatar(null);
     setSelectedFile(null);
@@ -177,10 +177,10 @@ export function SettingsPage() {
             <div className="profile-avatar-overlay">
               {isUpdatingProfile ? <Loader2 size={24} className="spin" /> : <Camera size={24} />}
             </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
               accept="image/*"
               onChange={handleFileChange}
               style={{ display: 'none' }}
@@ -194,19 +194,19 @@ export function SettingsPage() {
                 {currentUser?.role}
               </span>
             </div>
-            
+
             {previewAvatar && (
               <div className="avatar-actions">
-                <button 
-                  className="save-avatar-btn" 
+                <button
+                  className="save-avatar-btn"
                   onClick={handleSaveAvatar}
                   disabled={isUpdatingProfile}
                 >
                   {isUpdatingProfile ? <Loader2 size={14} className="spin" /> : null}
                   Simpan
                 </button>
-                <button 
-                  className="cancel-avatar-btn" 
+                <button
+                  className="cancel-avatar-btn"
                   onClick={handleCancelAvatar}
                   disabled={isUpdatingProfile}
                 >
@@ -318,7 +318,7 @@ export function SettingsPage() {
       {/* Group Management Section */}
       <div className="settings-section">
         <h3>Grup Perjalanan</h3>
-        
+
         {message && (
           <div className={`message-alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             {message.text}
@@ -340,7 +340,7 @@ export function SettingsPage() {
             </div>
 
             {!isAdmin && (
-              <button 
+              <button
                 className="leave-group-btn"
                 onClick={handleLeaveGroup}
                 disabled={isLeaving}
@@ -353,7 +353,7 @@ export function SettingsPage() {
                 Keluar dari Grup
               </button>
             )}
-            
+
             {isAdmin && (
               <p className="admin-note">
                 Sebagai admin, Anda tidak dapat meninggalkan grup.
@@ -374,8 +374,8 @@ export function SettingsPage() {
                 className="join-code-input"
                 maxLength={8}
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="join-group-btn"
                 disabled={isJoining || !joinCode.trim()}
               >

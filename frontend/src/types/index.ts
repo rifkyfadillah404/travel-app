@@ -20,6 +20,7 @@ export interface Group {
   departureDate: string;
   returnDate: string;
   departureAirport: string;
+  destination?: string;
   members: User[];
 }
 
