@@ -32,7 +32,9 @@ export function GPSTrackingPage() {
   // Filter out admins from tracking
   const filteredUsers = users.filter(u => u.role?.toLowerCase() !== 'admin');
   // Also filter out current user - can't track yourself
-  const usersWithLocation = filteredUsers.filter((u) => u.location && u.id !== currentUser?.id);
+  // Convert both to string for reliable comparison (backend might send number, frontend expects string)
+  const currentUserId = String(currentUser?.id || '');
+  const usersWithLocation = filteredUsers.filter((u) => u.location && String(u.id) !== currentUserId);
   const selectedUser = selectedUserId ? filteredUsers.find(u => u.id === selectedUserId) : null;
 
   // Reset route fit flag when changing target user
