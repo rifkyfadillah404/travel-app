@@ -27,10 +27,14 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: '*', // Allow all for testing
+  origin: true, // Reflect request origin (allow all)
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'token', 'ngrok-skip-browser-warning']
 }));
+
+// Handle preflight specifically for peace of mind
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -40,7 +44,7 @@ app.set('io', io);
 // Socket.IO Authentication Middleware
 io.use((socket, next) => {
   const token = socket.handshake.auth.token || socket.handshake.headers.token;
-  
+
   if (!token) {
     return next(new Error('Authentication error: Token missing'));
   }
@@ -72,7 +76,7 @@ app.use((req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('SERVER_ERROR:', err);
-  
+
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     message: err.message || 'Terjadi kesalahan pada server',
@@ -99,7 +103,7 @@ io.on('connection', (socket) => {
   // Location update
   socket.on('location-update', (data) => {
     const { latitude, longitude } = data;
-    
+
     if (!groupId) return;
 
     // Broadcast to all users in the same group
@@ -112,7 +116,7 @@ io.on('connection', (socket) => {
   // Panic alert
   socket.on('panic-alert', (data) => {
     const { alert } = data;
-    
+
     if (!groupId) return;
 
     // Broadcast panic alert to all users in the same group
@@ -122,7 +126,7 @@ io.on('connection', (socket) => {
   // Panic resolved
   socket.on('panic-resolved', (data) => {
     const { alertId } = data;
-    
+
     if (!groupId) return;
 
     io.to(`group-${groupId}`).emit('panic-alert-resolved', { alertId, userId });

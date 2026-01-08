@@ -1,7 +1,9 @@
 import { io, Socket } from 'socket.io-client';
 
 // Use ngrok URL for mobile/remote testing
-const SOCKET_URL = 'https://pseudolegal-kurtis-farinosely.ngrok-free.dev';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Remove '/api' from the end to get the base URL
+const SOCKET_URL = API_URL.replace(/\/api$/, '');
 
 class SocketService {
   private socket: Socket | null = null;
