@@ -276,6 +276,21 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
             className={`qr-reader ${isStarting || error ? 'hidden' : ''}`}
             style={{ width: '100%', maxWidth: '400px', margin: '0 auto', overflow: 'hidden', borderRadius: '12px' }}
           />
+
+          {/* iOS Tip */}
+          {/iPad|iPhone|iPod/.test(navigator.userAgent) && !isStarting && !error && (
+            <div style={{
+              marginTop: '12px',
+              padding: '12px 16px',
+              background: '#f0f9ff',
+              borderRadius: '8px',
+              border: '1px solid #bae6fd',
+              fontSize: '0.813rem',
+              color: '#0369a1'
+            }}>
+              <strong>💡 Tip iOS:</strong> Jika scanner tidak berfungsi, tutup halaman ini dan gunakan <strong>Camera app bawaan iPhone</strong> untuk scan QR. Link akan otomatis terbuka.
+            </div>
+          )}
         </div>
 
         <div className="qr-scanner-footer">
