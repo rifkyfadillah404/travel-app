@@ -156,97 +156,48 @@ export function GPSTrackingPage() {
       const myLatLng = L.latLng(myLocation.lat, myLocation.lng);
       const targetLatLng = L.latLng(selectedUser.location.lat, selectedUser.location.lng);
 
-      setIsLoadingRoute(true);
-      setRouteDistance(null);
-      setRouteDuration(null);
+      // Always draw straight line first (instant visual feedback)
+      routeLineRef.current = L.polyline([myLatLng, targetLatLng], {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.7,
+      }).addTo(mapInstanceRef.current!);
 
-      // Fetch route from OpenRouteService API
-      const fetchRoute = async () => {
-        try {
-          // OpenRouteService free API - 2000 requests/day
-          const response = await fetch(
-            `https://router.project-osrm.org/route/v1/driving/${myLocation.lng},${myLocation.lat};${selectedUser.location!.lng},${selectedUser.location!.lat}?overview=full&geometries=geojson`
-          );
+      // Calculate straight-line distance
+      const R = 6371;
+      const dLat = (selectedUser.location.lat - myLocation.lat) * Math.PI / 180;
+      const dLng = (selectedUser.location.lng - myLocation.lng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(myLocation.lat * Math.PI / 180) * Math.cos(selectedUser.location.lat * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distanceKm = R * c;
 
-          if (!response.ok) throw new Error('Route fetch failed');
+      // Update distance display immediately
+      if (distanceKm < 1) {
+        setRouteDistance(`${Math.round(distanceKm * 1000)} m`);
+      } else {
+        setRouteDistance(`${distanceKm.toFixed(1)} km`);
+      }
 
-          const data = await response.json();
+      // Estimate walking time (~5 km/h)
+      const walkingTimeMin = Math.round((distanceKm / 5) * 60);
+      if (walkingTimeMin < 60) {
+        setRouteDuration(`~${walkingTimeMin} menit`);
+      } else {
+        const hours = Math.floor(walkingTimeMin / 60);
+        const mins = walkingTimeMin % 60;
+        setRouteDuration(`~${hours} jam ${mins} menit`);
+      }
 
-          if (data.routes && data.routes.length > 0) {
-            const route = data.routes[0];
-            const coordinates = route.geometry.coordinates.map((coord: [number, number]) =>
-              L.latLng(coord[1], coord[0])
-            );
+      // Fit map to show both points (only once)
+      if (!hasFitRouteRef.current) {
+        const bounds = L.latLngBounds([myLatLng, targetLatLng]);
+        mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50] });
+        hasFitRouteRef.current = true;
+      }
 
-            // Draw the actual route
-            routeLineRef.current = L.polyline(coordinates, {
-              color: '#3b82f6',
-              weight: 5,
-              opacity: 0.8,
-            }).addTo(mapInstanceRef.current!);
-
-            // Set distance
-            const distanceKm = route.distance / 1000;
-            if (distanceKm < 1) {
-              setRouteDistance(`${Math.round(distanceKm * 1000)} m`);
-            } else {
-              setRouteDistance(`${distanceKm.toFixed(1)} km`);
-            }
-
-            // Set duration
-            const durationMin = Math.round(route.duration / 60);
-            if (durationMin < 60) {
-              setRouteDuration(`${durationMin} menit`);
-            } else {
-              const hours = Math.floor(durationMin / 60);
-              const mins = durationMin % 60;
-              setRouteDuration(`${hours} jam ${mins} menit`);
-            }
-
-            // Fit map to route (only once)
-            if (!hasFitRouteRef.current) {
-              const bounds = L.latLngBounds(coordinates);
-              mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50] });
-              hasFitRouteRef.current = true;
-            }
-          }
-        } catch (error) {
-          console.error('Route error:', error);
-          // Fallback to straight line
-          routeLineRef.current = L.polyline([myLatLng, targetLatLng], {
-            color: '#3b82f6',
-            weight: 4,
-            opacity: 0.8,
-            dashArray: '10, 10',
-          }).addTo(mapInstanceRef.current!);
-
-          // Calculate straight-line distance as fallback
-          const R = 6371;
-          const dLat = (selectedUser.location!.lat - myLocation.lat) * Math.PI / 180;
-          const dLng = (selectedUser.location!.lng - myLocation.lng) * Math.PI / 180;
-          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(myLocation.lat * Math.PI / 180) * Math.cos(selectedUser.location!.lat * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          const distance = R * c;
-
-          if (distance < 1) {
-            setRouteDistance(`~${Math.round(distance * 1000)} m`);
-          } else {
-            setRouteDistance(`~${distance.toFixed(1)} km`);
-          }
-
-          if (!hasFitRouteRef.current) {
-            const bounds = L.latLngBounds([myLatLng, targetLatLng]);
-            mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50] });
-            hasFitRouteRef.current = true;
-          }
-        } finally {
-          setIsLoadingRoute(false);
-        }
-      };
-
-      fetchRoute();
+      setIsLoadingRoute(false);
     } else {
       setRouteDistance(null);
       setRouteDuration(null);
