@@ -16,6 +16,7 @@ import {
 import { useAppStore } from './stores/appStore';
 import { Loader2 } from 'lucide-react';
 import './App.css';
+import { pushService } from './utils/push';
 
 function App() {
   const { initApp, isAuthenticated, isLoading } = useAppStore();
@@ -23,6 +24,13 @@ function App() {
   useEffect(() => {
     initApp();
   }, [initApp]);
+
+  // Ensure push subscription is active when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      pushService.subscribe().catch(console.error);
+    }
+  }, [isAuthenticated]);
 
   // Check if we have a token but are not yet authenticated
   // This prevents flashing to login page during initialization

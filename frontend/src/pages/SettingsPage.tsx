@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/appStore';
-import { MapPin, Power, Clock, Target, Users, LogOut, Loader2, Camera } from 'lucide-react';
+import { MapPin, Power, Clock, Target, Users, LogOut, Loader2, Camera, Bell } from 'lucide-react';
+import { pushService } from '../utils/push';
 // import { groupsAdminAPI } from '../utils/api';
 
 // Compress image before upload (client side)
@@ -312,6 +313,39 @@ export function SettingsPage() {
             <option value={1000}>1 km</option>
             <option value={2000}>2 km</option>
           </select>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Notifikasi</h3>
+        <div className="setting-item">
+          <div className="setting-info">
+            <Bell size={20} />
+            <div>
+              <span className="setting-label">Push Notification</span>
+              <span className="setting-desc">
+                Dapatkan notifikasi panic alert & pengumuman
+              </span>
+            </div>
+          </div>
+          <button
+            className="btn-outline"
+            style={{ fontSize: '0.75rem', padding: '4px 12px' }}
+            onClick={async () => {
+              try {
+                const subscribed = await pushService.subscribe();
+                if (subscribed) {
+                  alert('Notifikasi berhasil diaktifkan!');
+                } else {
+                  alert('Gagal mengaktifkan notifikasi. Pastikan izin browser diberikan.');
+                }
+              } catch (e) {
+                alert('Error: ' + e);
+              }
+            }}
+          >
+            Aktifkan / Cek
+          </button>
         </div>
       </div>
 
