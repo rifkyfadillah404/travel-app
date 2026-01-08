@@ -140,6 +140,35 @@ export function GPSTrackingPage() {
 
   }, [myLocation, currentUser?.avatar, currentUser?.name]);
 
+  // Fetch route from OSRM API
+  const fetchRoute = async (start: { lat: number; lng: number }, end: { lat: number; lng: number }) => {
+    try {
+      // OSRM API: coordinates are lng,lat (reversed!)
+      const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        // Convert GeoJSON coordinates [lng, lat] to Leaflet LatLng [lat, lng]
+        const coordinates = route.geometry.coordinates.map((coord: [number, number]) =>
+          L.latLng(coord[1], coord[0])
+        );
+
+        return {
+          coordinates,
+          distance: route.distance, // in meters
+          duration: route.duration  // in seconds
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to fetch route:', error);
+      return null;
+    }
+  };
+
   // Create/update route line when tracking
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -155,39 +184,86 @@ export function GPSTrackingPage() {
       const myLatLng = L.latLng(myLocation.lat, myLocation.lng);
       const targetLatLng = L.latLng(selectedUser.location.lat, selectedUser.location.lng);
 
-      // Always draw straight line first (instant visual feedback)
+      setIsLoadingRoute(true);
+
+      // Draw temporary straight line first (instant visual feedback)
       routeLineRef.current = L.polyline([myLatLng, targetLatLng], {
-        color: '#3b82f6',
-        weight: 4,
-        opacity: 0.7,
+        color: '#94a3b8',
+        weight: 3,
+        opacity: 0.5,
+        dashArray: '10, 10',
       }).addTo(mapInstanceRef.current!);
 
-      // Calculate straight-line distance
-      const R = 6371;
-      const dLat = (selectedUser.location.lat - myLocation.lat) * Math.PI / 180;
-      const dLng = (selectedUser.location.lng - myLocation.lng) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(myLocation.lat * Math.PI / 180) * Math.cos(selectedUser.location.lat * Math.PI / 180) *
-        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distanceKm = R * c;
+      // Fetch actual road route from OSRM
+      fetchRoute(myLocation, selectedUser.location).then((routeData) => {
+        if (!mapInstanceRef.current) return;
 
-      // Update distance display immediately
-      if (distanceKm < 1) {
-        setRouteDistance(`${Math.round(distanceKm * 1000)} m`);
-      } else {
-        setRouteDistance(`${distanceKm.toFixed(1)} km`);
-      }
+        // Remove the temporary line
+        if (routeLineRef.current) {
+          routeLineRef.current.remove();
+        }
 
-      // Estimate walking time (~5 km/h)
-      const walkingTimeMin = Math.round((distanceKm / 5) * 60);
-      if (walkingTimeMin < 60) {
-        setRouteDuration(`~${walkingTimeMin} menit`);
-      } else {
-        const hours = Math.floor(walkingTimeMin / 60);
-        const mins = walkingTimeMin % 60;
-        setRouteDuration(`~${hours} jam ${mins} menit`);
-      }
+        if (routeData) {
+          // Draw actual road route
+          routeLineRef.current = L.polyline(routeData.coordinates, {
+            color: '#3b82f6',
+            weight: 5,
+            opacity: 0.8,
+          }).addTo(mapInstanceRef.current!);
+
+          // Update distance from actual route
+          const distanceKm = routeData.distance / 1000;
+          if (distanceKm < 1) {
+            setRouteDistance(`${Math.round(routeData.distance)} m`);
+          } else {
+            setRouteDistance(`${distanceKm.toFixed(1)} km`);
+          }
+
+          // Update duration from actual route (walking)
+          const durationMin = Math.round(routeData.duration / 60);
+          if (durationMin < 60) {
+            setRouteDuration(`~${durationMin} menit`);
+          } else {
+            const hours = Math.floor(durationMin / 60);
+            const mins = durationMin % 60;
+            setRouteDuration(`~${hours} jam ${mins} menit`);
+          }
+        } else {
+          // Fallback to straight line if routing fails
+          routeLineRef.current = L.polyline([myLatLng, targetLatLng], {
+            color: '#3b82f6',
+            weight: 4,
+            opacity: 0.7,
+          }).addTo(mapInstanceRef.current!);
+
+          // Calculate straight-line distance as fallback
+          const R = 6371;
+          const dLat = (selectedUser.location!.lat - myLocation.lat) * Math.PI / 180;
+          const dLng = (selectedUser.location!.lng - myLocation.lng) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(myLocation.lat * Math.PI / 180) * Math.cos(selectedUser.location!.lat * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distanceKm = R * c;
+
+          if (distanceKm < 1) {
+            setRouteDistance(`${Math.round(distanceKm * 1000)} m`);
+          } else {
+            setRouteDistance(`${distanceKm.toFixed(1)} km`);
+          }
+
+          const walkingTimeMin = Math.round((distanceKm / 5) * 60);
+          if (walkingTimeMin < 60) {
+            setRouteDuration(`~${walkingTimeMin} menit`);
+          } else {
+            const hours = Math.floor(walkingTimeMin / 60);
+            const mins = walkingTimeMin % 60;
+            setRouteDuration(`~${hours} jam ${mins} menit`);
+          }
+        }
+
+        setIsLoadingRoute(false);
+      });
 
       // Fit map to show both points (only once)
       if (!hasFitRouteRef.current) {
@@ -195,8 +271,6 @@ export function GPSTrackingPage() {
         mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50] });
         hasFitRouteRef.current = true;
       }
-
-      setIsLoadingRoute(false);
     } else {
       setRouteDistance(null);
       setRouteDuration(null);
