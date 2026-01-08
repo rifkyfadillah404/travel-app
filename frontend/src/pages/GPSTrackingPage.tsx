@@ -19,7 +19,7 @@ export function GPSTrackingPage() {
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserPicker, setShowUserPicker] = useState(false);
-  const [myLocation, setMyLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [myLocation, setMyLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [routeDistance, setRouteDistance] = useState<string | null>(null);
   const [routeDuration, setRouteDuration] = useState<string | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
@@ -45,9 +45,9 @@ export function GPSTrackingPage() {
       setGpsError('Browser tidak mendukung GPS');
       return;
     }
-    
+
     setGpsError(null);
-    
+
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         setMyLocation({
@@ -73,9 +73,9 @@ export function GPSTrackingPage() {
             setGpsError('Gagal mendapatkan lokasi.');
         }
       },
-      { 
-        enableHighAccuracy: true, 
-        timeout: 15000, 
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
         maximumAge: 0 // Selalu minta lokasi fresh
       }
     );
@@ -93,15 +93,17 @@ export function GPSTrackingPage() {
     }
 
     const hasAvatar = !!currentUser?.avatar;
-    
+    const userInitial = currentUser?.name?.charAt(0) || 'M';
+    const iconSize = 48;
+
     const myIcon = L.divIcon({
       className: 'my-location-marker',
       html: `
         <div style="
-          width: ${hasAvatar ? '48px' : '24px'};
-          height: ${hasAvatar ? '48px' : '24px'};
-          background: ${hasAvatar ? 'white' : '#3b82f6'};
-          border: 3px solid white;
+          width: ${iconSize}px;
+          height: ${iconSize}px;
+          background: ${hasAvatar ? '#fff' : '#3b82f6'};
+          border: 3px solid #3b82f6;
           border-radius: 50%;
           box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
           overflow: hidden;
@@ -109,21 +111,21 @@ export function GPSTrackingPage() {
           align-items: center;
           justify-content: center;
         ">
-          ${hasAvatar 
-            ? `<img src="${currentUser.avatar}" style="width: 100%; height: 100%; object-fit: cover;" />`
-            : ''
-          }
+          ${hasAvatar
+          ? `<img src="${currentUser.avatar}" style="width: 100%; height: 100%; object-fit: cover;" />`
+          : `<span style="color: white; font-weight: bold; font-size: 18px;">${userInitial}</span>`
+        }
         </div>
       `,
-      iconSize: hasAvatar ? [48, 48] : [24, 24],
-      iconAnchor: hasAvatar ? [24, 24] : [12, 12],
+      iconSize: [iconSize, iconSize],
+      iconAnchor: [iconSize / 2, iconSize / 2],
     });
 
     myLocationMarkerRef.current = L.marker([myLocation.lat, myLocation.lng], { icon: myIcon, zIndexOffset: 1000 })
       .addTo(mapInstanceRef.current)
       .bindPopup('Lokasi Anda');
-      
-  }, [myLocation, currentUser?.avatar]);
+
+  }, [myLocation, currentUser?.avatar, currentUser?.name]);
 
   // Create/update route line when tracking
   useEffect(() => {
@@ -139,7 +141,7 @@ export function GPSTrackingPage() {
     if (selectedUser?.location && myLocation) {
       const myLatLng = L.latLng(myLocation.lat, myLocation.lng);
       const targetLatLng = L.latLng(selectedUser.location.lat, selectedUser.location.lng);
-      
+
       setIsLoadingRoute(true);
       setRouteDistance(null);
       setRouteDuration(null);
@@ -151,17 +153,17 @@ export function GPSTrackingPage() {
           const response = await fetch(
             `https://router.project-osrm.org/route/v1/driving/${myLocation.lng},${myLocation.lat};${selectedUser.location!.lng},${selectedUser.location!.lat}?overview=full&geometries=geojson`
           );
-          
+
           if (!response.ok) throw new Error('Route fetch failed');
-          
+
           const data = await response.json();
-          
+
           if (data.routes && data.routes.length > 0) {
             const route = data.routes[0];
-            const coordinates = route.geometry.coordinates.map((coord: [number, number]) => 
+            const coordinates = route.geometry.coordinates.map((coord: [number, number]) =>
               L.latLng(coord[1], coord[0])
             );
-            
+
             // Draw the actual route
             routeLineRef.current = L.polyline(coordinates, {
               color: '#3b82f6',
@@ -208,12 +210,12 @@ export function GPSTrackingPage() {
           const R = 6371;
           const dLat = (selectedUser.location!.lat - myLocation.lat) * Math.PI / 180;
           const dLng = (selectedUser.location!.lng - myLocation.lng) * Math.PI / 180;
-          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(myLocation.lat * Math.PI / 180) * Math.cos(selectedUser.location!.lat * Math.PI / 180) * 
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(myLocation.lat * Math.PI / 180) * Math.cos(selectedUser.location!.lat * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
           const distance = R * c;
-          
+
           if (distance < 1) {
             setRouteDistance(`~${Math.round(distance * 1000)} m`);
           } else {
@@ -288,25 +290,24 @@ export function GPSTrackingPage() {
       const iconSize = isSelected ? 48 : 36;
       const borderWidth = isSelected ? 4 : 3;
 
-      const avatarContent = user.avatar 
-        ? `<img src="${user.avatar}" alt="${user.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+      const avatarContent = user.avatar
+        ? `<img src="${user.avatar}" alt="${user.name}" style="width: 100%; height: 100%; object-fit: cover;" />`
         : `<span style="color: white; font-weight: bold; font-size: ${isSelected ? '16px' : '13px'};">${user.name.charAt(0)}</span>`;
 
       const customIcon = L.divIcon({
         className: 'custom-marker',
         html: `
           <div style="
-            background-color: ${user.avatar ? 'transparent' : iconColor};
+            background-color: ${user.avatar ? '#fff' : iconColor};
             width: ${iconSize}px;
             height: ${iconSize}px;
             border-radius: 50%;
-            border: ${borderWidth}px solid ${isSelected ? '#0ea5e9' : 'white'};
+            border: ${borderWidth}px solid ${isSelected ? '#0ea5e9' : iconColor};
             box-shadow: 0 2px 8px rgba(0,0,0,0.3)${isSelected ? ', 0 0 0 4px rgba(14, 165, 233, 0.3)' : ''};
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            ${user.avatar ? `background: linear-gradient(135deg, ${iconColor} 0%, ${iconColor} 100%);` : ''}
           ">
             ${avatarContent}
           </div>
@@ -320,10 +321,10 @@ export function GPSTrackingPage() {
         .bindPopup(`
           <div class="map-popup-card">
             <div class="popup-avatar-wrapper">
-              ${user.avatar 
-                ? `<img src="${user.avatar}" class="popup-avatar-img" alt="${user.name}" />` 
-                : `<div class="popup-avatar-placeholder">${user.name.charAt(0)}</div>`
-              }
+              ${user.avatar
+            ? `<img src="${user.avatar}" class="popup-avatar-img" alt="${user.name}" />`
+            : `<div class="popup-avatar-placeholder">${user.name.charAt(0)}</div>`
+          }
               <span class="popup-status-dot ${user.isOnline ? 'online' : 'offline'}"></span>
             </div>
             <div class="popup-info">
@@ -355,7 +356,7 @@ export function GPSTrackingPage() {
         // Only auto-center if follow mode is enabled
         if (isFollowing) {
           mapInstanceRef.current?.setView(
-            [user.location.lat, user.location.lng], 
+            [user.location.lat, user.location.lng],
             mapInstanceRef.current.getZoom() // Keep current zoom level
           );
         }
@@ -427,17 +428,17 @@ export function GPSTrackingPage() {
 
   const handleToggleMapType = () => {
     if (!mapInstanceRef.current) return;
-    
+
     const newType = mapType === 'street' ? 'satellite' : 'street';
     setMapType(newType);
-    
+
     // Remove existing tile layer
     mapInstanceRef.current.eachLayer((layer) => {
       if (layer instanceof L.TileLayer) {
         layer.remove();
       }
     });
-    
+
     // Add new tile layer
     if (newType === 'satellite') {
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -452,15 +453,15 @@ export function GPSTrackingPage() {
 
   const handleFitAllUsers = () => {
     if (!mapInstanceRef.current || usersWithLocation.length === 0) return;
-    
+
     const points: L.LatLng[] = usersWithLocation
       .filter(u => u.location)
       .map(u => L.latLng(u.location!.lat, u.location!.lng));
-    
+
     if (myLocation) {
       points.push(L.latLng(myLocation.lat, myLocation.lng));
     }
-    
+
     if (points.length > 0) {
       const bounds = L.latLngBounds(points);
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
@@ -548,21 +549,21 @@ export function GPSTrackingPage() {
       {/* Map Container with Controls */}
       <div className={`map-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
         <div className="map-container" ref={mapRef}></div>
-        
+
         {/* Map Controls */}
         <div className="map-controls">
           <button className="map-control-btn" onClick={handleToggleFullscreen} title={isFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}>
             {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
           </button>
-          
+
           {selectedUser && (
-            <button 
-              className={`map-control-btn ${isFollowing ? 'active' : ''}`} 
+            <button
+              className={`map-control-btn ${isFollowing ? 'active' : ''}`}
               onClick={() => {
                 const newFollowingState = !isFollowing;
                 setIsFollowing(newFollowingState);
                 if (newFollowingState && selectedUser?.location) {
-                   mapInstanceRef.current?.setView([selectedUser.location.lat, selectedUser.location.lng], 16);
+                  mapInstanceRef.current?.setView([selectedUser.location.lat, selectedUser.location.lng], 16);
                 }
               }}
               title={isFollowing ? "Stop Follow" : "Follow User"}
@@ -632,25 +633,25 @@ export function GPSTrackingPage() {
         <>
           {/* GPS Status Bar */}
           <div className={`gps-status-bar ${gpsError ? 'error' : myLocation ? 'active' : 'loading'}`}>
-        {gpsError ? (
-          <>
-            <MapPin size={16} />
-            <span>{gpsError}</span>
-          </>
-        ) : myLocation ? (
-          <>
-            <MapPin size={16} />
-            <span>GPS Aktif</span>
-            {gpsAccuracy && (
-              <span className="gps-accuracy">Akurasi: {Math.round(gpsAccuracy)}m</span>
+            {gpsError ? (
+              <>
+                <MapPin size={16} />
+                <span>{gpsError}</span>
+              </>
+            ) : myLocation ? (
+              <>
+                <MapPin size={16} />
+                <span>GPS Aktif</span>
+                {gpsAccuracy && (
+                  <span className="gps-accuracy">Akurasi: {Math.round(gpsAccuracy)}m</span>
+                )}
+              </>
+            ) : (
+              <>
+                <MapPin size={16} className="pulse" />
+                <span>Mencari lokasi...</span>
+              </>
             )}
-          </>
-        ) : (
-          <>
-            <MapPin size={16} className="pulse" />
-            <span>Mencari lokasi...</span>
-          </>
-        )}
           </div>
 
           <div className="tracking-info">
@@ -666,31 +667,31 @@ export function GPSTrackingPage() {
 
           <div className="user-locations-list">
             <h3>Lokasi Jamaah</h3>
-        {usersWithLocation.map((user) => (
-          <div
-            key={user.id}
-            className={`location-card ${user.isPanic ? 'location-card--panic' : ''} ${user.id === selectedUserId ? 'location-card--selected' : ''}`}
-            onClick={() => user.location && centerOnUser(user.location.lat, user.location.lng, user.id)}
-          >
-            {renderAvatar(user)}
-            <div className="location-details">
-              <span className="location-name">
-                {user.name}
-                {user.id === selectedUserId && <Target size={14} className="tracking-icon" />}
-              </span>
-              {user.location && (
-                <span className="location-coords">
-                  {user.location.lat.toFixed(4)}, {user.location.lng.toFixed(4)}
-                </span>
-              )}
-            </div>
-            {user.location && (
-              <span className="location-time">
-                {formatDistanceToNow(user.location.timestamp, { addSuffix: true, locale: id })}
-              </span>
-            )}
-          </div>
-        ))}
+            {usersWithLocation.map((user) => (
+              <div
+                key={user.id}
+                className={`location-card ${user.isPanic ? 'location-card--panic' : ''} ${user.id === selectedUserId ? 'location-card--selected' : ''}`}
+                onClick={() => user.location && centerOnUser(user.location.lat, user.location.lng, user.id)}
+              >
+                {renderAvatar(user)}
+                <div className="location-details">
+                  <span className="location-name">
+                    {user.name}
+                    {user.id === selectedUserId && <Target size={14} className="tracking-icon" />}
+                  </span>
+                  {user.location && (
+                    <span className="location-coords">
+                      {user.location.lat.toFixed(4)}, {user.location.lng.toFixed(4)}
+                    </span>
+                  )}
+                </div>
+                {user.location && (
+                  <span className="location-time">
+                    {formatDistanceToNow(user.location.timestamp, { addSuffix: true, locale: id })}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         </>
       )}
@@ -721,7 +722,7 @@ export function GPSTrackingPage() {
                     <div className="user-picker-info">
                       <span className="user-picker-name">{user.name}</span>
                       <span className="user-picker-status">
-                        {user.isOnline ? 'Online' : 'Offline'} 
+                        {user.isOnline ? 'Online' : 'Offline'}
                         {user.isPanic && ' - PANIC!'}
                       </span>
                     </div>
