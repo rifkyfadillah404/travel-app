@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '../stores/appStore';
 
 // Helper to calculate distance between two coordinates in meters
@@ -23,24 +23,42 @@ export function LocationTracker() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastLocationRef = useRef<{ lat: number; lng: number } | null>(null);
   const lastSentLocationRef = useRef<{ lat: number; lng: number } | null>(null);
-  const [isAppVisible, setIsAppVisible] = useState(!document.hidden);
 
-  // Handle app visibility (foreground/background)
+  // Request wake lock to keep screen on during tracking
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsAppVisible(!document.hidden);
+    let wakeLock: WakeLockSentinel | null = null;
+
+    const requestWakeLock = async () => {
+      if ('wakeLock' in navigator && settings.isGpsActive && isAuthenticated) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('[LocationTracker] Wake lock acquired - screen will stay on');
+        } catch (err) {
+          console.log('[LocationTracker] Wake lock failed:', err);
+        }
+      }
     };
 
+    requestWakeLock();
+
+    // Re-acquire wake lock when page becomes visible again
+    const handleVisibilityChange = () => {
+      if (!document.hidden && settings.isGpsActive) {
+        requestWakeLock();
+      }
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      wakeLock?.release();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [settings.isGpsActive, isAuthenticated]);
 
   useEffect(() => {
-    // BATTERY OPTIMIZATION: Only track if app is in foreground
-    if (!isAuthenticated || !settings.isAppActive || !settings.isGpsActive || !currentUser || !isAppVisible) {
-      // Cleanup if conditions not met (e.g. app goes to background)
+    // Track even in background, but we won't stop tracking when hidden
+    if (!isAuthenticated || !settings.isAppActive || !settings.isGpsActive || !currentUser) {
+      // Cleanup if conditions not met
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -113,7 +131,7 @@ export function LocationTracker() {
         intervalRef.current = null;
       }
     };
-  }, [isAuthenticated, settings.isAppActive, settings.isGpsActive, settings.trackingInterval, currentUser, sendLocation, isAppVisible, users]);
+  }, [isAuthenticated, settings.isAppActive, settings.isGpsActive, settings.trackingInterval, currentUser, sendLocation, users]);
 
   // This component doesn't render anything
   return null;
