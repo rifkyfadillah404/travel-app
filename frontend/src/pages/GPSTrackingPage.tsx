@@ -34,7 +34,18 @@ export function GPSTrackingPage() {
   // Also filter out current user - can't track yourself
   // Convert both to string for reliable comparison (backend might send number, frontend expects string)
   const currentUserId = String(currentUser?.id || '');
-  const usersWithLocation = filteredUsers.filter((u) => u.location && String(u.id) !== currentUserId);
+
+  // DEBUG: Log to see what's happening
+  console.log('DEBUG: currentUser.id =', currentUser?.id, 'type:', typeof currentUser?.id);
+  console.log('DEBUG: currentUserId (string) =', currentUserId);
+  console.log('DEBUG: filteredUsers IDs =', filteredUsers.map(u => ({ id: u.id, type: typeof u.id, name: u.name })));
+
+  const usersWithLocation = filteredUsers.filter((u) => {
+    const userId = String(u.id);
+    const shouldInclude = u.location && userId !== currentUserId;
+    console.log(`DEBUG: User ${u.name} (${userId}) vs current (${currentUserId}) = include: ${shouldInclude}`);
+    return shouldInclude;
+  });
   const selectedUser = selectedUserId ? filteredUsers.find(u => u.id === selectedUserId) : null;
 
   // Reset route fit flag when changing target user

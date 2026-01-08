@@ -84,26 +84,34 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
       const scanner = new Html5Qrcode('qr-reader');
       scannerRef.current = scanner;
 
-      // Get cameras after permission is granted
-      const cameras = await Html5Qrcode.getCameras();
+      // Detect iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-      if (cameras.length === 0) {
-        setError('Tidak ada kamera yang ditemukan');
-        setIsStarting(false);
-        return;
+      // For iOS, use facingMode constraint instead of cameraId (more reliable)
+      // For Android, try to get specific back camera
+      let cameraConfig: { facingMode: string } | string = { facingMode: 'environment' };
+
+      if (!isIOS) {
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          if (cameras.length > 0) {
+            const backCamera = cameras.find(cam =>
+              cam.label.toLowerCase().includes('back') ||
+              cam.label.toLowerCase().includes('belakang') ||
+              cam.label.toLowerCase().includes('rear') ||
+              cam.label.toLowerCase().includes('environment')
+            );
+            if (backCamera) {
+              cameraConfig = backCamera.id;
+            }
+          }
+        } catch (e) {
+          console.log('Could not enumerate cameras, using facingMode');
+        }
       }
 
-      // Prefer back camera
-      const backCamera = cameras.find(cam =>
-        cam.label.toLowerCase().includes('back') ||
-        cam.label.toLowerCase().includes('belakang') ||
-        cam.label.toLowerCase().includes('rear') ||
-        cam.label.toLowerCase().includes('environment')
-      );
-      const cameraId = backCamera?.id || cameras[0].id;
-
       await scanner.start(
-        cameraId,
+        cameraConfig,
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
@@ -127,7 +135,17 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
       setIsStarting(false);
     } catch (err: any) {
       console.error('Scanner error:', err);
-      setError(`Gagal memulai scanner: ${err.message || 'Error tidak diketahui'}`);
+
+      // More helpful error messages for iOS
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        if (err.message?.includes('NotAllowedError')) {
+          setError('Akses kamera ditolak. Di iOS, buka Settings > Safari > Camera dan pilih "Allow"');
+        } else {
+          setError(`iOS: ${err.message || 'Gagal mengakses kamera'}. Pastikan menggunakan Safari dan izinkan akses kamera.`);
+        }
+      } else {
+        setError(`Gagal memulai scanner: ${err.message || 'Error tidak diketahui'}`);
+      }
       setIsStarting(false);
     }
   };
