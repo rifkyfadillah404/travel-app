@@ -43,10 +43,9 @@ export function GPSTrackingPage() {
   const usersWithLocation = filteredUsers.filter((u) => {
     const userId = String(u.id);
     const shouldInclude = u.location && userId !== currentUserId;
-    console.log(`DEBUG: User ${u.name} (${userId}) vs current (${currentUserId}) = include: ${shouldInclude}`);
     return shouldInclude;
   });
-  const selectedUser = selectedUserId ? filteredUsers.find(u => u.id === selectedUserId) : null;
+  const selectedUser = selectedUserId ? filteredUsers.find(u => String(u.id) === String(selectedUserId)) : null;
 
   // Reset route fit flag when changing target user
   useEffect(() => {
@@ -337,7 +336,12 @@ export function GPSTrackingPage() {
         fillOpacity: 0.1,
       }).addTo(mapInstanceRef.current);
     }
-  }, [usersWithLocation, settings.radiusLimit, selectedUserId, isFollowing]);
+  }, [
+    JSON.stringify(usersWithLocation.map(u => ({ id: u.id, lat: u.location?.lat, lng: u.location?.lng, isOnline: u.isOnline, isPanic: u.isPanic })),),
+    settings.radiusLimit,
+    selectedUserId,
+    isFollowing
+  ]);
 
   const handleRefresh = () => {
     window.location.reload();

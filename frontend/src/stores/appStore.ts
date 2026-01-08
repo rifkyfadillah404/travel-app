@@ -82,7 +82,7 @@ export const useAppStore = create<AppState>()(
 
       updateUserLocation: (userId, lat, lng) => set((state) => ({
         users: state.users.map((u) =>
-          u.id === userId
+          String(u.id) === String(userId)
             ? { ...u, location: { lat, lng, timestamp: Date.now() }, isOnline: true }
             : u
         ),
@@ -90,16 +90,16 @@ export const useAppStore = create<AppState>()(
 
       updateUserAvatar: (userId, avatar) => set((state) => ({
         users: state.users.map((u) =>
-          u.id === userId ? { ...u, avatar } : u
+          String(u.id) === String(userId) ? { ...u, avatar } : u
         ),
-        currentUser: state.currentUser?.id === userId
+        currentUser: state.currentUser && String(state.currentUser.id) === String(userId)
           ? { ...state.currentUser, avatar }
           : state.currentUser
       })),
 
       setUserPanic: (userId, isPanic) => set((state) => ({
         users: state.users.map((u) =>
-          u.id === userId ? { ...u, isPanic } : u
+          String(u.id) === String(userId) ? { ...u, isPanic } : u
         ),
       })),
 
